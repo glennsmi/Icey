@@ -74,7 +74,7 @@ const DashboardPage = ({ user }: DashboardProps) => {
 
   return (
     <div className="app-container">
-      <div className="dashboard">
+      <div className="dashboard" style={{ width: '540px', marginLeft: 'auto', marginRight: 'auto' }}>
         <div className="user-welcome">
           <h1>Welcome!</h1>
           <p>{user.displayName || user.email}</p>
