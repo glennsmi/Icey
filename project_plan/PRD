@@ -1,0 +1,129 @@
+# Product Requirements Document: Tunegram MVP 1.0
+
+**Date:** 2023-10-27
+**Version:** 1.0 (Hackathon MVP)
+**Product Goal:** Win hackathon via viral social sharing by enabling users to transform personal photos into funny, shareable songs.
+
+---
+
+## 1. Introduction & Overview
+
+Tunegram is a web application designed to create a humorous and highly shareable experience by generating personalized songs based on user-uploaded photos. Users upload an image, fill in Mad Libs-style prompts related to the photo, choose a dynamically generated funny genre, and receive a short music video (photo + audio + karaoke lyrics) designed for easy sharing on social platforms. The core focus for MVP is rapid, funny content creation and viral distribution.
+
+---
+
+## 2. Goals
+
+*   **Primary:** Achieve viral sharing sufficient to win the hackathon.
+*   **Secondary:**
+    *   Provide a novel and humorous user experience.
+    *   Generate highly personalized and shareable content (music videos).
+    *   Ensure low-friction sharing to major social platforms.
+
+---
+
+## 3. Target Audience
+
+*   **Demographics:** Age 18-35, Male & Female.
+*   **Psychographics:** Socially active online, users of platforms like TikTok/Instagram Reels, enjoy sharing humorous content, likely to engage with personalized media, appreciate internet trends and meme culture.
+
+---
+
+## 4. Functional Requirements (MVP)
+
+**4.1. User Interface (UI) Flow:**
+*   Implement a simple, linear user flow:
+    1.  Upload Photo Screen
+    2.  Mad Libs Input Screen
+    3.  Genre Selection Screen
+    4.  Result Display & Sharing Screen
+
+**4.2. Photo Upload:**
+*   **FR-01:** Allow users to select and upload an image file (standard formats like JPG, PNG, WEBP).
+*   **FR-02:** Implement image upload to a cloud storage solution (e.g., Firebase Storage).
+*   **FR-03:** Store the accessible URL of the uploaded image (e.g., in Firestore) associated with a unique session or creation ID.
+
+**4.3. Image Analysis (Basic):**
+*   **FR-04:** Implement basic image analysis on the uploaded photo.
+*   **FR-05:** Identify core elements such as:
+    *   Presence of people.
+    *   General setting (e.g., 'beach', 'party', 'nature', 'city').
+    *   Presence of 1-2 dominant object categories (e.g., 'pet', 'food').
+*   **FR-06:** Use these identified elements solely to inform the selection of Mad Libs prompts. (Focus on getting *some* relevance, not deep understanding).
+
+**4.4. Mad Libs Interaction:**
+*   **FR-07:** Generate and display Mad Libs-style prompts (blanks to fill in).
+*   **FR-08:** Prompts should be loosely based on elements identified in FR-05 (e.g., if 'beach' detected, prompts might relate to sun, sand, water).
+*   **FR-09:** Ensure Mad Libs templates are structured to encourage humorous user input.
+*   **FR-10:** Provide a clear UI for users to input text for each blank.
+*   **FR-11:** Capture and store the user's Mad Libs inputs.
+
+**4.5. Dynamic Genre Generation & Selection:**
+*   **FR-12:** Dynamically generate 3 unique, funny, and quirky genre names based partially on keywords from image analysis (FR-05) and/or Mad Libs inputs (FR-11).
+    *   *Example Logic:* Combine detected element ('cat') + random style ('Disco') -> "Cat Disco". Focus on novelty and humor over semantic accuracy.
+*   **FR-13:** Display these 3 generated genre names as selectable options to the user.
+*   **FR-14:** Allow the user to select one genre option.
+*   **FR-15:** Store the user's selected genre name.
+
+**4.6. Lyric Generation:**
+*   **FR-16:** Generate song lyrics using an AI text generation model.
+*   **FR-17:** Lyrics MUST incorporate the user's Mad Libs inputs (FR-11).
+*   **FR-18:** Lyrics should make a *basic* attempt to reflect the *tone* or *style* implied by the chosen funny genre name (FR-15) (e.g., more upbeat/repetitive words for 'Disco', simpler/slower phrasing for 'Ballad'). Focus on integrating inputs and vague tonal match.
+
+**4.7. Music Generation:**
+*   **FR-19:** Generate a short musical backing track using an AI music generation model.
+*   **FR-20:** The music style should *roughly* correspond to keywords in the chosen genre name (FR-15). (e.g., 'Disco' gets an electronic beat, 'Ballad' is slower tempo, 'Rock' uses guitar sounds).
+*   **FR-21:** Focus on creating an *audible difference* between potential genre outputs, not necessarily high musical fidelity or complexity. Aim for recognizable genre parody.
+
+**4.8. Song Combination & Output:**
+*   **FR-22:** Combine the generated lyrics (FR-18) and music (FR-20) into a single audio track.
+*   **FR-23:** Lyrics should be rendered either via text-to-speech (synthesized voice) OR clearly overlaid as text. *Decision Required: Synthesized voice preferred for audio-centric platforms, but text overlay is simpler if TTS is too complex for hackathon.* Assume **Synthesized Voice** for now.
+*   **FR-24:** Generate a final output as a short video file (e.g., MP4).
+*   **FR-25:** The video MUST display the original uploaded photo (static or with minimal subtle animation like zoom/pan).
+*   **FR-26:** The video MUST display the generated lyrics synchronized with the audio track in a "karaoke" style (text appears as it's sung/spoken).
+*   **FR-27:** The video should include the generated audio track (music + vocals).
+
+**4.9. Sharing Mechanisms:**
+*   **FR-28:** Generate a unique, publicly accessible web link (URL) for each created song video.
+*   **FR-29:** This URL should lead to a simple web page displaying the generated video (photo + karaoke lyrics + audio).
+*   **FR-30:** Provide a button or mechanism for the user to easily copy this unique web link.
+*   **FR-31:** Include at least one direct "Share" button integrated with a primary target social platform's API (e.g., TikTok or Instagram Reels).
+*   **FR-32:** This direct share button should initiate the native share flow of the target platform, pre-populating it with the generated video file (FR-24).
+
+---
+
+## 5. Key Technologies (Anticipated)
+
+*   **Frontend:** HTML, CSS, JavaScript (Vanilla or simple framework)
+*   **Backend/Cloud:** Firebase (Storage, Firestore), Cloud Functions (potentially for triggering AI jobs)
+*   **AI Services:**
+    *   Image Analysis API (e.g., Cloud Vision AI, or simpler model)
+    *   Text Generation API (e.g., OpenAI GPT, Claude API, Gemini API)
+    *   Music Generation API (e.g., Magenta, specialized music AI service)
+    *   Text-to-Speech (TTS) API (if implementing synthesized voice)
+*   **Video Generation:** Server-side library/service (e.g., FFmpeg) or client-side canvas rendering for combining elements.
+
+---
+
+## 6. Out of Scope for MVP 1.0 (Could-Haves)
+
+*   Advanced/detailed image recognition (clothing, actions, expressions).
+*   Sophisticated/nuanced dynamic genre name generation logic.
+*   Deep genre influence on musical composition, arrangement, and vocal style.
+*   User accounts, profiles, saving multiple creations.
+*   "Explore" feed or gallery of user creations.
+*   Support for multiple direct share platforms beyond the primary target.
+*   User customization options for music, voice, or visuals.
+*   Injection of unrelated funny themes not derived from the photo/input.
+*   Polished UI/UX animations and complex design elements.
+*   Direct download of audio (MP3) or video (MP4) files (Web link + Direct Share cover core loop).
+
+---
+
+## 7. Viral Hooks Summary (Key Design Principles)
+
+*   **Personalization:** Uses user's own photo and friend-specific Mad Libs input.
+*   **Humor:** Baked into Mad Libs structure and funny genre names.
+*   **Novelty/Surprise:** Dynamic genre generation creates unexpected results.
+*   **Shareable Format:** Karaoke-style video is optimized for social consumption.
+*   **Low-Friction Sharing:** Direct platform integration and easy link copying.
