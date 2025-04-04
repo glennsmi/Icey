@@ -10,6 +10,7 @@ import DashboardPage from './pages/DashboardPage'
 import UploadPage from './pages/UploadPage'
 import TuneUploadPage from './pages/TuneUploadPage'
 import MyTunesPage from './pages/MyTunesPage'
+import LandingPage from './pages/LandingPage'
 
 // Import Components
 import Layout from './components/Layout'
@@ -30,7 +31,10 @@ function App() {
   if (loading) {
     return (
       <div className="app-container">
-        <div className="loading-spinner">Loading...</div>
+        <div className="loading-spinner">
+          <div className="spinner-inner"></div>
+          <div className="loading-text">Tuning in...</div>
+        </div>
       </div>
     )
   }
@@ -38,10 +42,16 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Route - Login Page - No Layout */}
+        {/* Public Route - Landing Page with Login Component */}
         <Route 
           path="/" 
-          element={user ? <Navigate to="/dashboard" /> : <LoginPage />} 
+          element={user ? <Navigate to="/dashboard" /> : <LandingPage />} 
+        />
+        
+        {/* Separate login page for direct access */}
+        <Route
+          path="/login"
+          element={user ? <Navigate to="/dashboard" /> : <LoginPage />}
         />
         
         {/* Protected Routes - With Layout */}

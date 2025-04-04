@@ -1,0 +1,313 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Apply a fun font for headings */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+@layer base {
+  .font-display {
+    font-family: 'Nunito', sans-serif;
+  }
+}
+
+/* Child-friendly animations */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes float-delayed {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes float-slow {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bounce-gentle {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: float-delayed 7s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: float-slow 8s ease-in-out infinite;
+}
+
+.animate-bounce-gentle {
+  animation: bounce-gentle 1.5s ease-in-out infinite;
+}
+
+.shadow-magic {
+  box-shadow: 0 0 15px rgba(104, 58, 252, 0.5), 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Voice Agent Styles */
+.voice-agent {
+  @apply bg-indigo-50 rounded-xl p-6 border border-indigo-200 mb-6;
+}
+
+.voice-agent-status {
+  @apply flex justify-center mb-4;
+}
+
+.status-indicator {
+  @apply px-4 py-2 rounded-lg font-medium text-center min-w-32;
+}
+
+.status-indicator.idle {
+  @apply bg-gray-100 text-gray-600;
+}
+
+.status-indicator.listening {
+  @apply bg-green-100 text-green-600 animate-pulse;
+}
+
+.status-indicator.processing {
+  @apply bg-blue-100 text-blue-600;
+}
+
+.status-indicator.speaking {
+  @apply bg-indigo-100 text-indigo-600 animate-pulse;
+}
+
+.status-indicator.error {
+  @apply bg-red-100 text-red-600;
+}
+
+.voice-agent-controls {
+  @apply flex justify-center gap-4 mb-6;
+}
+
+.voice-agent-controls button {
+  @apply px-4 py-2 rounded-lg font-medium transition-colors;
+}
+
+.voice-agent-controls .listen-button {
+  @apply bg-indigo-600 text-white hover:bg-indigo-700 disabled:bg-indigo-300;
+}
+
+.voice-agent-controls .stop-button {
+  @apply bg-red-500 text-white hover:bg-red-600 disabled:bg-red-300;
+}
+
+.voice-agent-controls .process-button {
+  @apply bg-green-500 text-white hover:bg-green-600 disabled:bg-green-300;
+}
+
+.current-transcript {
+  @apply bg-white/70 rounded-lg p-4 mb-6 min-h-16 border border-indigo-100;
+}
+
+.conversation-history {
+  @apply bg-white/70 rounded-lg p-4 mb-6 max-h-64 overflow-y-auto border border-indigo-100;
+}
+
+.conversation-entry {
+  @apply mb-3 p-3 rounded-lg;
+}
+
+.conversation-entry.agent {
+  @apply bg-indigo-50 text-indigo-800;
+}
+
+.conversation-entry.user {
+  @apply bg-gray-50 text-gray-800;
+}
+
+/* Simple Voice Agent Styles */
+.voice-button {
+  @apply h-24 w-24 flex items-center justify-center transition-all transform hover:scale-105 active:scale-95;
+}
+
+.voice-button:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.pulsing {
+  animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.conversation-display {
+  @apply overflow-y-auto border border-indigo-100 bg-white/80 p-4;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(99, 102, 241, 0.2) transparent;
+}
+
+/* Custom scrollbar for webkit browsers */
+.conversation-display::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversation-display::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversation-display::-webkit-scrollbar-thumb {
+  background-color: rgba(99, 102, 241, 0.2);
+  border-radius: 20px;
+}
+
+/* Story cards hover effects */
+.story-card {
+  transition: all 0.3s ease;
+}
+
+.story-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Additional animations for fun elements */
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(0.8);
+  }
+}
+
+.sparkle {
+  display: inline-block;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+/* Add fun border styles */
+.fun-border {
+  border-style: dashed;
+  border-width: 3px;
+  border-color: theme('colors.indigo.300');
+}
+
+/* Voice Form Controller Styles */
+.voice-form-container {
+  @apply bg-white/60 rounded-xl;
+}
+
+.voice-form-header {
+  @apply flex items-center gap-2 mb-6;
+}
+
+.voice-form-status {
+  @apply mb-6;
+}
+
+.agent-message {
+  @apply bg-indigo-50 p-4 rounded-lg mb-4 border border-indigo-100;
+}
+
+.form-progress {
+  @apply mb-4;
+}
+
+.progress-bar {
+  @apply h-2 bg-gray-200 rounded-full overflow-hidden mb-2;
+}
+
+.progress-fill {
+  @apply h-full bg-indigo-600 transition-all duration-300 ease-in-out;
+}
+
+.visual-form {
+  @apply space-y-4 mb-8;
+}
+
+.form-field {
+  @apply p-4 border rounded-lg transition;
+}
+
+.form-field.active {
+  @apply border-indigo-400 bg-indigo-50/50;
+}
+
+.form-field.completed:not(.active) {
+  @apply border-green-200 bg-green-50/50;
+}
+
+.form-field label {
+  @apply block font-medium text-gray-700 mb-2;
+}
+
+.form-field select, .form-field input {
+  @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500;
+}
+
+.completion-message {
+  @apply text-center p-6 bg-green-50 rounded-lg border border-green-200;
+}
+
+/* Floating effects */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.float {
+  animation: float 6s ease-in-out infinite;
+}
+
+/* Custom button glow effect */
+.button-glow {
+  box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+  transition: box-shadow 0.3s ease;
+}
+
+.button-glow:hover {
+  box-shadow: 0 0 30px rgba(79, 70, 229, 0.8);
+}
