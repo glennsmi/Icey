@@ -7,8 +7,14 @@
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
 
-import {onRequest} from "firebase-functions/v2/https";
-import * as logger from "firebase-functions/logger";
+// Import our simple test function
+export { helloWorld } from './simpleTest';
+
+// Import our image analysis function (commented out for now)
+// export { analyzeTuneImage } from './imageAnalysis';
+// export { analyzeTuneImageManual } from './imageAnalysis';
+// Optional: If you want to use the genkit sample as well
+// export { menuSuggestion } from './genkit-sample';
 
 // Start writing functions
 // https://firebase.google.com/docs/functions/typescript

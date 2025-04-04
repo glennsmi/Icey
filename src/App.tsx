@@ -8,8 +8,11 @@ import { onAuthStateChanged, User } from 'firebase/auth'
 import LoginPage from './pages/LoginPage'
 import DashboardPage from './pages/DashboardPage'
 import UploadPage from './pages/UploadPage'
+import TuneUploadPage from './pages/TuneUploadPage'
+import MyTunesPage from './pages/MyTunesPage'
 
 // Import Components
+import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -35,28 +38,53 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Route - Login Page */}
+        {/* Public Route - Login Page - No Layout */}
         <Route 
           path="/" 
           element={user ? <Navigate to="/dashboard" /> : <LoginPage />} 
         />
         
-        {/* Protected Route - Dashboard Page */}
+        {/* Protected Routes - With Layout */}
         <Route 
           path="/dashboard" 
           element={
             <ProtectedRoute user={user}>
-              <DashboardPage user={user} />
+              <Layout user={user}>
+                <DashboardPage user={user} />
+              </Layout>
             </ProtectedRoute>
           } 
         />
         
-        {/* Protected Route - Upload Page */}
         <Route 
           path="/upload" 
           element={
             <ProtectedRoute user={user}>
-              <UploadPage user={user} />
+              <Layout user={user}>
+                <UploadPage user={user} />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/tune-upload" 
+          element={
+            <ProtectedRoute user={user}>
+              <Layout user={user}>
+                <TuneUploadPage user={user} />
+              </Layout>
+            </ProtectedRoute>
+          } 
+        />
+        
+        <Route 
+          path="/my-tunes" 
+          element={
+            <ProtectedRoute user={user}>
+              <Layout user={user}>
+                <MyTunesPage user={user} />
+              </Layout>
             </ProtectedRoute>
           } 
         />

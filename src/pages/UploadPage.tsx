@@ -128,15 +128,11 @@ const UploadPage = ({ user }: UploadPageProps) => {
     }
   }
   
-  const handleBack = () => {
-    navigate('/dashboard')
-  }
-  
   return (
-    <div className="app-container">
+    <div className="upload-container">
       <div className="upload-card">
-        <h1>Upload Profile Picture</h1>
-        <p>Select an image to use as your profile picture</p>
+        <h1>Update Profile Picture</h1>
+        <p>Choose an image to set as your profile picture</p>
         
         {error && <div className="upload-error">{error}</div>}
         {success && <div className="upload-success">{success}</div>}
@@ -163,6 +159,16 @@ const UploadPage = ({ user }: UploadPageProps) => {
             />
           </div>
           
+          <div className="upload-buttons">
+            <button 
+              type="submit" 
+              className="upload-button"
+              disabled={!selectedFile || isUploading}
+            >
+              {isUploading ? 'Uploading...' : 'Update Profile'}
+            </button>
+          </div>
+          
           {isUploading && (
             <div className="progress-container">
               <div 
@@ -172,24 +178,6 @@ const UploadPage = ({ user }: UploadPageProps) => {
               <div className="progress-text">{Math.round(uploadProgress)}%</div>
             </div>
           )}
-          
-          <div className="upload-buttons">
-            <button 
-              type="button" 
-              className="back-button"
-              onClick={handleBack}
-              disabled={isUploading}
-            >
-              Back to Dashboard
-            </button>
-            <button 
-              type="submit" 
-              className="upload-button"
-              disabled={!selectedFile || isUploading}
-            >
-              {isUploading ? 'Uploading...' : 'Upload'}
-            </button>
-          </div>
         </form>
       </div>
     </div>

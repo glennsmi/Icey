@@ -1,7 +1,30 @@
-import { useNavigate } from 'react-router-dom'
-import { auth } from '../firebase'
+import { useNavigate, Link } from 'react-router-dom'
+import { auth, db } from '../firebase'
 import { signOut, User } from 'firebase/auth'
 import { useEffect, useState } from 'react'
+import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore'
+
+interface TuneAnalysis {
+  mood: string;
+  elements: string[];
+  musicRelevance: string;
+  suggestedTags: string[];
+}
+
+interface TuneItem {
+  id: string;
+  title: string;
+  artist: string;
+  description?: string;
+  imageURL: string;
+  timestamp: any;
+  userName: string;
+  userPhotoURL?: string;
+  likes: number;
+  analysis?: TuneAnalysis;
+  tags?: string[];
+  analyzed?: boolean;
+}
 
 interface DashboardProps {
   user: User | null;
@@ -12,6 +35,41 @@ const DashboardPage = ({ user }: DashboardProps) => {
   const [initial, setInitial] = useState<string>('U')
   const [imageError, setImageError] = useState<boolean>(false)
   const [photoURL, setPhotoURL] = useState<string>('')
+  const [tunes, setTunes] = useState<TuneItem[]>([])
+  const [loading, setLoading] = useState<boolean>(true)
+
+  // Fetch user's tunes
+  useEffect(() => {
+    const fetchTunes = async () => {
+      if (!user) return;
+      
+      try {
+        setLoading(true);
+        const tunesRef = collection(db, 'tunes');
+        const q = query(
+          tunesRef, 
+          where('userId', '==', user.uid),
+          orderBy('timestamp', 'desc'),
+          limit(10)
+        );
+        
+        const querySnapshot = await getDocs(q);
+        const tunesList: TuneItem[] = [];
+        
+        querySnapshot.forEach((doc) => {
+          tunesList.push({ id: doc.id, ...doc.data() } as TuneItem);
+        });
+        
+        setTunes(tunesList);
+      } catch (error) {
+        console.error('Error fetching tunes:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTunes();
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -73,38 +131,86 @@ const DashboardPage = ({ user }: DashboardProps) => {
   }
 
   return (
-    <div className="app-container">
-      <div className="dashboard" style={{ width: '540px', marginLeft: 'auto', marginRight: 'auto' }}>
-        <div className="user-welcome">
-          <h1>Welcome!</h1>
-          <p>{user.displayName || user.email}</p>
-          <div className="user-avatar">
-            {photoURL && !imageError ? (
-              <img 
-                src={photoURL} 
-                alt=""
-                onError={handleImageError}
-                crossOrigin="anonymous"
-              />
-            ) : (
-              <div className="avatar-placeholder">
-                {initial}
+    <div className="dashboard-content">
+      <div className="dashboard-header">
+        <h1>Welcome, {user.displayName || user.email?.split('@')[0] || 'User'}</h1>
+        <p>Check out your tune collection below</p>
+      </div>
+      
+      {/* Recent Tunes Gallery */}
+      <div className="tunes-section">
+        <div className="section-header">
+          <h2>Your Tunes Collection</h2>
+          <Link to="/tune-upload" className="action-button">
+            <i className="icon">➕</i> Share New Tune
+          </Link>
+        </div>
+        
+        {loading ? (
+          <div className="loading-spinner">Loading your tunes...</div>
+        ) : tunes.length === 0 ? (
+          <div className="empty-state">
+            <div className="empty-state-content">
+              <h3>No tunes yet</h3>
+              <p>You haven't shared any tunes yet. Start by uploading your first tune!</p>
+              <Link to="/tune-upload" className="action-button">
+                <i className="icon">➕</i> Share Your First Tune
+              </Link>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="dashboard-tunes-grid">
+              {tunes.map((tune) => (
+                <div className="dashboard-tune-card" key={tune.id}>
+                  <div className="tune-image-container">
+                    <img 
+                      src={tune.imageURL} 
+                      alt={tune.title} 
+                      className="tune-image" 
+                    />
+                  </div>
+                  <div className="tune-info">
+                    <h4>{tune.title}</h4>
+                    <p className="tune-artist">{tune.artist}</p>
+                    
+                    {tune.analyzed && tune.analysis && (
+                      <div className="tune-analysis">
+                        <div className="analysis-item">
+                          <span className="analysis-label">Mood:</span>
+                          <span className="analysis-value">{tune.analysis.mood}</span>
+                        </div>
+                        
+                        {tune.tags && tune.tags.length > 0 && (
+                          <div className="tune-tags">
+                            {tune.tags.map((tag, index) => (
+                              <span key={index} className="tune-tag">#{tag}</span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {tune.analyzed === false && (
+                      <p className="analyzing-message">AI is analyzing this image...</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {tunes.length > 0 && (
+              <div className="view-all-container">
+                <button 
+                  className="view-all-button"
+                  onClick={() => navigate('/my-tunes')}
+                >
+                  View All Tunes
+                </button>
               </div>
             )}
-          </div>
-        </div>
-        <div className="user-content">
-          <h2>You are logged in</h2>
-          <p>This is your protected dashboard.</p>
-          <div className="dashboard-buttons">
-            <button className="upload-image-button" onClick={() => navigate('/upload')}>
-              Upload Profile Picture
-            </button>
-            <button className="logout-button" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        </div>
+          </>
+        )}
       </div>
     </div>
   )

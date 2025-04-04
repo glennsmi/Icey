@@ -94,7 +94,7 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="app-container">
+    <div className="login-page">
       <div className="auth-container">
         <div className="auth-card">
           <h1>Welcome</h1>
