@@ -42,16 +42,22 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Public Route - Landing Page with Login Component */}
+        {/* Public Route - Landing Page */}
         <Route 
           path="/" 
-          element={user ? <Navigate to="/dashboard" /> : <LandingPage />} 
+          element={<LandingPage />} 
         />
         
         {/* Separate login page for direct access */}
         <Route
           path="/login"
           element={user ? <Navigate to="/dashboard" /> : <LoginPage />}
+        />
+        
+        {/* Public Route - Tune Upload Page (no login required) */}
+        <Route 
+          path="/tune-upload" 
+          element={<TuneUploadPage user={user} />}
         />
         
         {/* Protected Routes - With Layout */}
@@ -78,17 +84,6 @@ function App() {
         />
         
         <Route 
-          path="/tune-upload" 
-          element={
-            <ProtectedRoute user={user}>
-              <Layout user={user}>
-                <TuneUploadPage user={user} />
-              </Layout>
-            </ProtectedRoute>
-          } 
-        />
-        
-        <Route 
           path="/my-tunes" 
           element={
             <ProtectedRoute user={user}>
@@ -99,10 +94,10 @@ function App() {
           } 
         />
         
-        {/* Catch-all route - Redirect to Login or Dashboard */}
+        {/* Catch-all route - Redirect to Landing Page */}
         <Route 
           path="*" 
-          element={user ? <Navigate to="/dashboard" /> : <Navigate to="/" />} 
+          element={<Navigate to="/" />} 
         />
       </Routes>
     </Router>

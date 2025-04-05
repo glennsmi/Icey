@@ -1,18 +1,80 @@
 import { useState, useRef, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import LoginPage from './LoginPage'
+import cartesiaService from '../utils/cartesiaService'
 
 const LandingPage = () => {
   const [showLogin, setShowLogin] = useState(false)
-  const [email, setEmail] = useState('')
   const ctaRef = useRef<HTMLDivElement>(null)
+  const navigate = useNavigate()
+  const [logoError, setLogoError] = useState(false)
+  
+  // Add state to track if the audio is playing
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false)
+  
+  // Initialize audio context for browser compatibility
+  useEffect(() => {
+    // Initialize audio context on component mount
+    const initAudio = () => {
+      // Create and immediately discard an audio context to prompt browser to allow audio
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      try {
+        const audioContext = new AudioContext();
+        // Suspend it immediately to save resources
+        audioContext.suspend();
+        console.log('Audio context initialized for LandingPage');
+      } catch (error) {
+        console.error('Failed to initialize audio context:', error);
+      }
+    };
+
+    // Initialize audio on component mount
+    initAudio();
+    
+    // Add event listeners to ensure audio works after user interaction
+    const handleUserInteraction = () => {
+      initAudio();
+      // Remove the event listeners after first interaction
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+    
+    document.addEventListener('click', handleUserInteraction);
+    document.addEventListener('touchstart', handleUserInteraction);
+    
+    // Clean up event listeners on component unmount
+    return () => {
+      document.removeEventListener('click', handleUserInteraction);
+      document.removeEventListener('touchstart', handleUserInteraction);
+    };
+  }, []);
   
   const scrollToCta = () => {
     ctaRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
-  const handleStartNow = () => {
-    setShowLogin(true)
+  const handleStartNow = async () => {
+    // Prevent double-clicks
+    if (isPlayingAudio) return;
+    
+    setIsPlayingAudio(true);
+    
+    try {
+      // Play Rob's Scottish phrase
+      await cartesiaService.speakRobSignaturePhrase();
+      // Navigate to the tune upload page after the phrase is done
+      navigate('/tune-upload');
+    } catch (error) {
+      console.error("Error playing Rob's Scottish phrase:", error);
+      // Navigate anyway if there's an error with the audio
+      navigate('/tune-upload');
+    } finally {
+      setIsPlayingAudio(false);
+    }
+  }
+
+  const handleLogoError = () => {
+    setLogoError(true)
   }
 
   return (
@@ -24,11 +86,7 @@ const LandingPage = () => {
       </div>
       
       <div className="landing-content">
-        <header className="landing-header">
-          <div className="logo-container">
-            <h1 className="app-logo">Tunegram</h1>
-          </div>
-          
+        <header className="landing-header centered-header">
           <nav className="landing-nav">
             <button 
               className="login-button"
@@ -37,10 +95,23 @@ const LandingPage = () => {
               Log In
             </button>
           </nav>
-        </header>
-        
-        <main className="hero-section">
-          <div className="hero-content">
+          
+          <div className="logo-container centered-logo">
+            {logoError ? (
+              <h1 className="app-logo">Tunegram</h1>
+            ) : (
+              <img 
+                src="/images/tunegramrob.png" 
+                alt="Tunegram Logo" 
+                className="logo-image large-logo" 
+                width="350" 
+                onError={handleLogoError}
+              />
+            )}
+          </div>
+          
+          {/* Hero headline directly below logo */}
+          <div className="hero-header">
             <h2 className="hero-title">
               Turn Your Photos Into <span className="highlight">Hilarious Songs</span>
             </h2>
@@ -48,45 +119,83 @@ const LandingPage = () => {
             <p className="hero-subtitle">
               10,000+ users are already creating funny, shareable songs from their photos
             </p>
+          </div>
+          
+          {/* Call to action directly below headline */}
+          <div className="action-row centered-cta">
+            <button 
+              className="cta-button pulse"
+              onClick={handleStartNow}
+              disabled={isPlayingAudio}
+            >
+              {isPlayingAudio ? 'Starting...' : 'Create Your Song'}
+            </button>
             
-            <div className="action-row">
-              <div className="email-capture">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="email-input"
-                />
-                <button 
-                  className="cta-button pulse"
-                  onClick={handleStartNow}
-                >
-                  Start Free
-                </button>
+            <p className="no-credit-card">No signup required • Free to create</p>
+          </div>
+          
+          <div className="trust-badges centered-badges">
+            <div className="trust-item">
+              <span className="trust-icon">⭐</span>
+              <span>50K+ Songs Generated</span>
+            </div>
+            <div className="trust-item">
+              <span className="trust-icon">🔊</span>
+              <span>Viral-Ready Audio</span>
+            </div>
+            <div className="trust-item">
+              <span className="trust-icon">🚀</span>
+              <span>AI-Powered</span>
+            </div>
+          </div>
+        </header>
+        
+        <main className="hero-section">
+          <div className="app-preview centered-preview">
+            <div className="mockup-container">
+              <div className="photo-to-song-mockup">
+                <div className="photo-side">
+                  <div className="photo-frame">
+                    <div className="photo-placeholder">
+                      <span className="emoji-placeholder">📸</span>
+                    </div>
+                    <div className="arrow">→</div>
+                  </div>
+                </div>
+                <div className="song-side">
+                  <div className="song-result">
+                    <div className="song-waveform">
+                      <div className="waveform-bar"></div>
+                      <div className="waveform-bar"></div>
+                      <div className="waveform-bar"></div>
+                      <div className="waveform-bar"></div>
+                      <div className="waveform-bar"></div>
+                    </div>
+                    <div className="song-title">Beach Party Rap</div>
+                    <div className="play-button">▶</div>
+                  </div>
+                </div>
               </div>
-              
-              <p className="no-credit-card">No credit card required • Instant access</p>
             </div>
             
-            <div className="trust-badges">
-              <div className="trust-item">
-                <span className="trust-icon">⭐</span>
-                <span>50K+ Songs Generated</span>
+            <div className="floating-reviews">
+              <div className="review-card">
+                "My friends can't stop laughing!"
+                <div className="review-stars">★★★★★</div>
               </div>
-              <div className="trust-item">
-                <span className="trust-icon">🔊</span>
-                <span>Viral-Ready Audio</span>
+              <div className="review-card delay-1">
+                "Went viral on TikTok!"
+                <div className="review-stars">★★★★★</div>
               </div>
-              <div className="trust-item">
-                <span className="trust-icon">🚀</span>
-                <span>AI-Powered</span>
+              <div className="review-card delay-2">
+                "The AI songs are hilarious"
+                <div className="review-stars">★★★★★</div>
               </div>
             </div>
           </div>
           
-          <div className="hero-visual">
-            {showLogin ? (
+          {showLogin && (
+            <div className="login-modal-overlay">
               <div className="login-modal">
                 <button 
                   className="close-login"
@@ -96,51 +205,8 @@ const LandingPage = () => {
                 </button>
                 <LoginPage />
               </div>
-            ) : (
-              <div className="app-preview">
-                <div className="mockup-container">
-                  <div className="photo-to-song-mockup">
-                    <div className="photo-side">
-                      <div className="photo-frame">
-                        <div className="photo-placeholder">
-                          <span className="emoji-placeholder">📸</span>
-                        </div>
-                        <div className="arrow">→</div>
-                      </div>
-                    </div>
-                    <div className="song-side">
-                      <div className="song-result">
-                        <div className="song-waveform">
-                          <div className="waveform-bar"></div>
-                          <div className="waveform-bar"></div>
-                          <div className="waveform-bar"></div>
-                          <div className="waveform-bar"></div>
-                          <div className="waveform-bar"></div>
-                        </div>
-                        <div className="song-title">Beach Party Rap</div>
-                        <div className="play-button">▶</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="floating-reviews">
-                  <div className="review-card">
-                    "My friends can't stop laughing!"
-                    <div className="review-stars">★★★★★</div>
-                  </div>
-                  <div className="review-card delay-1">
-                    "Went viral on TikTok!"
-                    <div className="review-stars">★★★★★</div>
-                  </div>
-                  <div className="review-card delay-2">
-                    "The AI songs are hilarious"
-                    <div className="review-stars">★★★★★</div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
         </main>
         
         <section className="how-it-works">
@@ -174,6 +240,7 @@ const LandingPage = () => {
         </section>
         
         <section className="features-section">
+          <h2 className="section-heading">Tunegram Features</h2>
           <div className="features-grid">
             <div className="feature-box">
               <div className="feature-icon">🤣</div>
@@ -220,26 +287,18 @@ const LandingPage = () => {
             <p>Upload a photo and get a shareable song in seconds</p>
             
             <div className="action-row centered">
-              <div className="email-capture">
-                <input 
-                  type="email" 
-                  placeholder="Enter your email" 
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="email-input"
-                />
-                <button 
-                  className="cta-button pulse"
-                  onClick={handleStartNow}
-                >
-                  Start Free
-                </button>
-              </div>
+              <button 
+                className="cta-button pulse"
+                onClick={handleStartNow}
+                disabled={isPlayingAudio}
+              >
+                {isPlayingAudio ? 'Starting...' : 'Create Now - It\'s Free!'}
+              </button>
             </div>
             
             <div className="guarantee">
               <span className="guarantee-icon">✓</span> 
-              <span>Free forever • No credit card required • Instant access</span>
+              <span>Free to create • Premium features available • No signup required</span>
             </div>
           </div>
         </section>
