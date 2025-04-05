@@ -1,0 +1,50 @@
+flowchart TD
+    Start([Start]) --> Upload[1. Photo Upload]
+    Upload --> ImageAnalysis[2. Image Analysis]
+    ImageAnalysis --> MadLibsGen[3. Mad Libs Generation]
+    MadLibsGen --> UserInput[4. User Fills Mad Libs]
+    UserInput --> GenreGen[5. Genre Name Generation]
+    GenreGen --> GenreChoice[6. User Selects from 3 Genre Options]
+    GenreChoice --> LyricGen[7. Lyric Generation]
+    LyricGen --> MusicGen[8. Music Generation]
+    MusicGen --> Combine[9. Combine Lyrics and Music]
+    Combine --> VideoCreate[10. Generate Video with Karaoke Lyrics]
+    VideoCreate --> Share[11. Sharing Options]
+    
+    Share --> WebLink[Generate Unique Web Link]
+    Share --> SocialShare[Direct Share to Social Platforms]
+    WebLink --> End([End])
+    SocialShare --> End
+    
+    subgraph PhotoPhase[Photo Phase]
+        Upload
+        ImageAnalysis
+    end
+    
+    subgraph CreativePhase[Creative Input Phase]
+        MadLibsGen
+        UserInput
+        GenreGen
+        GenreChoice
+    end
+    
+    subgraph GenerationPhase[Generation Phase]
+        LyricGen
+        MusicGen
+        Combine
+        VideoCreate
+    end
+    
+    subgraph DistributionPhase[Distribution Phase]
+        Share
+        WebLink
+        SocialShare
+    end
+    
+    classDef phase fill:#f9f9f9,stroke:#333,stroke-width:2px
+    classDef step fill:#d4f1f9,stroke:#333,stroke-width:1px
+    classDef endpoint fill:#e1f5e1,stroke:#333,stroke-width:1px,stroke-dasharray:5 5
+    
+    class PhotoPhase,CreativePhase,GenerationPhase,DistributionPhase phase
+    class Upload,ImageAnalysis,MadLibsGen,UserInput,GenreGen,GenreChoice,LyricGen,MusicGen,Combine,VideoCreate,Share,WebLink,SocialShare step
+    class Start,End endpoint

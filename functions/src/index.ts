@@ -8,7 +8,7 @@
  */
 
 // Import our simple test function
-export { helloWorld } from './simpleTest';
+export { analyzeTuneImageManual } from './imageAnalysis';
 
 // Import our image analysis function (commented out for now)
 // export { analyzeTuneImage } from './imageAnalysis';

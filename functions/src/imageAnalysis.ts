@@ -1,18 +1,16 @@
 // Import Firebase functions and admin SDK
 import * as admin from "firebase-admin";
-import { onObjectFinalized } from "firebase-functions/v2/storage";
-import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
-import { onCallGenkit } from "firebase-functions/https";
+import { onCall } from "firebase-functions/v2/https";
 import { genkit, z } from "genkit";
 import { googleAI, gemini20Flash } from "@genkit-ai/googleai";
 
-// Define the Google API key secret
-const apiKey = defineSecret("GOOGLE_GENAI_API_KEY");
+// Define the Google API key
+import { GOOGLE_GEMINI_API_KEY } from "../keys";
 
 // Initialize the Genkit AI with Google AI plugin
 const ai = genkit({
-  plugins: [googleAI()],
+  plugins: [googleAI({ apiKey: GOOGLE_GEMINI_API_KEY })],
 });
 
 // Initialize Firebase Admin if not already initialized
@@ -26,7 +24,6 @@ const analyzeImageFlow = ai.defineFlow({
   inputSchema: z.object({
     imageUrl: z.string().describe("URL of the image to analyze"),
     title: z.string().describe("Song title"),
-    artist: z.string().describe("Artist name"),
     description: z.string().optional().describe("User description")
   }),
   outputSchema: z.object({
@@ -42,7 +39,6 @@ const analyzeImageFlow = ai.defineFlow({
       Analyze this image in the context of the music information provided.
       
       Song Title: ${input.title}
-      Artist: ${input.artist}
       Description: ${input.description || "None provided"}
       
       Please identify:
@@ -114,107 +110,31 @@ const analyzeImageFlow = ai.defineFlow({
   }
 });
 
-// Create a Cloud Function triggered when an image is uploaded to the tune_images folder
-export const analyzeTuneImage = onObjectFinalized({
-  secrets: [apiKey],
-  region: "us-central1",
-  maxInstances: 10,
-}, async (event) => {
-  // Check if the uploaded file is in the tune_images folder
-  if (!event.data.name.startsWith("tune_images/")) {
-    logger.info(`Skipping analysis for ${event.data.name} as it's not in tune_images folder`);
-    return;
-  }
-
-  try {
-    // Get the file details
-    const fileBucket = event.data.bucket;
-    const filePath = event.data.name;
-    const contentType = event.data.contentType || "";
-
-    // Verify it's an image
-    if (!contentType.startsWith("image/")) {
-      logger.info(`File ${filePath} is not an image (${contentType}), skipping analysis`);
-      return;
-    }
-
-    // Extract the user ID and tune ID from the path structure
-    // Expected format: tune_images/{userId}/{timestamp}_{originalFilename}
-    const pathParts = filePath.split("/");
-    if (pathParts.length < 3) {
-      logger.error(`Invalid file path structure: ${filePath}`);
-      return;
-    }
-    
-    const userId = pathParts[1];
-    // We don't need the timestamp but we extract it from the filename for log purposes
-    // const timestamp = fileNameParts[0];
-
-    // Generate a signed URL for the image (expires in 30 minutes)
-    const bucket = admin.storage().bucket(fileBucket);
-    const file = bucket.file(filePath);
-    
-    const [signedUrl] = await file.getSignedUrl({
-      action: "read",
-      expires: Date.now() + 30 * 60 * 1000, // 30 minutes
-    });
-
-    // Find the corresponding Firestore document
-    const tunesRef = admin.firestore().collection("tunes");
-    const querySnapshot = await tunesRef
-      .where("userId", "==", userId)
-      .where("imageURL", "!=", null)
-      .orderBy("imageURL")
-      .orderBy("timestamp", "desc")
-      .limit(5)
-      .get();
-
-    // Find the document that matches our uploaded image
-    let tuneDoc: {
-      id: string;
-      title?: string;
-      artist?: string;
-      description?: string;
-      imageURL?: string;
-      [key: string]: any;
-    } | null = null;
-    
-    for (const doc of querySnapshot.docs) {
-      const data = doc.data();
-      if (data.imageURL && data.imageURL.includes(filePath)) {
-        tuneDoc = { id: doc.id, ...data };
-        break;
-      }
-    }
-
-    if (!tuneDoc) {
-      logger.error(`Could not find Firestore document for image: ${filePath}`);
-      return;
-    }
-
-    // Call the analysis function
-    const analysisResult = await analyzeImageFlow({
-      imageUrl: signedUrl,
-      title: tuneDoc.title || "Unknown",
-      artist: tuneDoc.artist || "Unknown",
-      description: tuneDoc.description || ""
-    });
-
-    // Update the Firestore document with the analysis results
-    await tunesRef.doc(tuneDoc.id).update({
-      analysis: analysisResult,
-      tags: analysisResult.suggestedTags,
-      analyzed: true,
-      analyzedAt: admin.firestore.FieldValue.serverTimestamp()
-    });
-
-    logger.info(`Successfully analyzed image ${filePath} and updated Firestore`);
-  } catch (error) {
-    logger.error("Error in analyzeTuneImage function:", error);
-  }
-});
-
 // Export a callable function for manual analysis
-export const analyzeTuneImageManual = onCallGenkit({
-  secrets: [apiKey],
-}, analyzeImageFlow); 
+export const analyzeTuneImageManual = onCall({
+  region: "us-central1",
+  cors: [
+    "http://localhost:5173",
+    "https://icey-52adb.web.app", 
+    "https://icey-52adb.firebaseapp.com"
+  ]
+}, async (request) => {
+  try {
+    const { imageUrl, title, artist, description } = request.data;
+    
+    if (!imageUrl || !title || !artist) {
+      throw new Error("Missing required parameters: imageUrl, title, and artist are required");
+    }
+    
+    const result = await analyzeImageFlow({
+      imageUrl,
+      title,
+      description: description || ""
+    });
+    
+    return result;
+  } catch (error: any) {
+    logger.error("Error in analyzeTuneImageManual function:", error);
+    throw new Error(`Failed to analyze image: ${error.message}`);
+  }
+}); 

@@ -49,6 +49,8 @@ body {
   --spacing-md: 20px;
   --spacing-lg: 30px;
   --spacing-xl: 60px;
+  --color-primary-dark: #3070A0;
+  --color-primary-light: rgba(58, 124, 165, 0.15);
 }
 
 /* App container and general layout */
@@ -800,4 +802,89 @@ body {
 
 .view-all-button:hover {
   background-color: var(--color-secondary);
+}
+
+/* Analysis button in tune cards */
+.analyze-button {
+  margin-top: var(--spacing-sm);
+  width: 100%;
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.analyze-button:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.analyze-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Analysis dialog styling */
+.dialog-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+  color: var(--color-text-light);
+}
+
+.analysis-results {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.analysis-result-item {
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-background);
+}
+
+.analysis-result-item h4 {
+  margin-bottom: var(--spacing-xs);
+  font-size: 1rem;
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.analysis-result-item p {
+  color: var(--color-text);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.analysis-result-item ul {
+  list-style-type: disc;
+  padding-left: var(--spacing-md);
+  color: var(--color-text);
+  font-size: 0.9rem;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: var(--spacing-xs);
+}
+
+.analysis-tag {
+  background-color: var(--color-primary-light);
+  color: var(--color-primary-dark);
+  border-radius: 30px;
+  padding: 4px 10px;
+  font-size: 0.8rem;
+}
+
+.dialog-error {
+  color: var(--color-error);
+  text-align: center;
+  padding: var(--spacing-md);
 }

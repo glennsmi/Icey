@@ -1,8 +1,18 @@
 import { useNavigate, Link } from 'react-router-dom'
-import { auth, db } from '../firebase'
+import { auth, db, functions } from '../firebase'
 import { signOut, User } from 'firebase/auth'
 import { useEffect, useState } from 'react'
-import { collection, query, where, orderBy, limit, getDocs } from 'firebase/firestore'
+import { collection, query, where, orderBy, limit, getDocs, updateDoc, doc } from 'firebase/firestore'
+import { httpsCallable } from 'firebase/functions'
+import { Button } from '../components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '../components/ui/dialog'
+import { analyzeTuneImageDirectly } from '../utils/genkitAnalysis'
 
 interface TuneAnalysis {
   mood: string;
@@ -15,15 +25,13 @@ interface TuneItem {
   id: string;
   title: string;
   artist: string;
-  description?: string;
   imageURL: string;
+  description?: string;
+  userId: string;
   timestamp: any;
-  userName: string;
-  userPhotoURL?: string;
-  likes: number;
   analysis?: TuneAnalysis;
-  tags?: string[];
   analyzed?: boolean;
+  tags?: string[];
 }
 
 interface DashboardProps {
@@ -37,6 +45,10 @@ const DashboardPage = ({ user }: DashboardProps) => {
   const [photoURL, setPhotoURL] = useState<string>('')
   const [tunes, setTunes] = useState<TuneItem[]>([])
   const [loading, setLoading] = useState<boolean>(true)
+  const [analyzing, setAnalyzing] = useState<boolean>(false)
+  const [selectedTune, setSelectedTune] = useState<TuneItem | null>(null)
+  const [analysisResult, setAnalysisResult] = useState<TuneAnalysis | null>(null)
+  const [dialogOpen, setDialogOpen] = useState<boolean>(false)
 
   // Fetch user's tunes
   useEffect(() => {
@@ -71,63 +83,99 @@ const DashboardPage = ({ user }: DashboardProps) => {
     fetchTunes();
   }, [user]);
 
+  // Initialize the user profile image or initials
   useEffect(() => {
-    if (!user) return;
-    
-    // Set initial for avatar placeholder
-    if (user.email && user.email.length > 0) {
-      setInitial(user.email.charAt(0).toUpperCase())
-    }
-    
-    // Process and set photoURL
-    if (user.photoURL) {
-      let url = user.photoURL;
-      
-      // Handle special Google photo URLs
-      if (url.includes('googleusercontent.com')) {
-        // Remove size restrictions to get full-size image
-        url = url.replace(/=s\d+-c/, '=s400-c');
+    if (user) {
+      if (user.photoURL) {
+        setPhotoURL(user.photoURL);
+      } else if (user.displayName) {
+        const initials = user.displayName.charAt(0).toUpperCase();
+        setInitial(initials);
+      } else if (user.email) {
+        const initials = user.email.charAt(0).toUpperCase();
+        setInitial(initials);
       }
-      
-      // Ensure URL uses HTTPS
-      if (url.startsWith('http:')) {
-        url = 'https:' + url.substring(5);
-      }
-      
-      setPhotoURL(url);
-      setImageError(false);
-      
-      console.log('Using profile photo URL:', url);
     }
-    
-    // Log user information for debugging
-    console.log('User data:', {
-      displayName: user.displayName,
-      email: user.email,
-      providerId: user.providerId,
-      photoURL: user.photoURL,
-      uid: user.uid
-    });
-  }, [user])
-
-  if (!user) {
-    // If no user is logged in, redirect to login page
-    navigate('/')
-    return null
-  }
+  }, [user]);
 
   const handleLogout = async () => {
     try {
-      await signOut(auth)
-      navigate('/')
+      await signOut(auth);
+      navigate('/login');
     } catch (error) {
-      console.error("Error logging out:", error instanceof Error ? error.message : String(error))
+      console.error('Error signing out:', error);
     }
-  }
+  };
 
-  const handleImageError = () => {
-    console.error('Image failed to load:', photoURL);
-    setImageError(true)
+  const handleAnalyzeImage = async (tune: TuneItem) => {
+    try {
+      setAnalyzing(true);
+      setSelectedTune(tune);
+      setDialogOpen(true);
+      
+      let analysisData: TuneAnalysis;
+      
+      try {
+        // Try to use direct Gemini API first
+        analysisData = await analyzeTuneImageDirectly(
+          tune.imageURL,
+          tune.title,
+          tune.artist,
+          tune.description || ''
+        );
+        
+        console.log('Direct Gemini analysis successful:', analysisData);
+      } catch (directError) {
+        console.warn('Direct Gemini API failed, falling back to Firebase function:', directError);
+        
+        // Fall back to Firebase function if direct API fails
+        const analyzeTuneImageManual = httpsCallable(functions, 'analyzeTuneImageManual');
+        const result = await analyzeTuneImageManual({
+          imageUrl: tune.imageURL,
+          title: tune.title,
+          artist: tune.artist,
+          description: tune.description || ''
+        });
+        
+        // Extract analysis data from function result
+        analysisData = result.data as TuneAnalysis;
+      }
+      
+      // Update the analysis result
+      setAnalysisResult(analysisData);
+      
+      // Optionally update the document in Firestore
+      if (user) {
+        try {
+          const tuneRef = doc(db, 'tunes', tune.id);
+          await updateDoc(tuneRef, {
+            analysis: analysisData,
+            analyzed: true
+          });
+          
+          // Update local state
+          setTunes(prevTunes => 
+            prevTunes.map(t => 
+              t.id === tune.id 
+                ? { ...t, analysis: analysisData, analyzed: true } 
+                : t
+            )
+          );
+        } catch (updateError) {
+          console.error('Error updating tune with analysis result:', updateError);
+        }
+      }
+    } catch (error) {
+      console.error('Error analyzing image:', error);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  // Handle edge case when user is null
+  if (!user) {
+    navigate('/login');
+    return null;
   }
 
   return (
@@ -194,6 +242,16 @@ const DashboardPage = ({ user }: DashboardProps) => {
                     {tune.analyzed === false && (
                       <p className="analyzing-message">AI is analyzing this image...</p>
                     )}
+                    
+                    <Button 
+                      className="analyze-button"
+                      onClick={() => handleAnalyzeImage(tune)}
+                      disabled={analyzing && selectedTune?.id === tune.id}
+                    >
+                      {analyzing && selectedTune?.id === tune.id 
+                        ? "Analyzing..." 
+                        : "Analyze Image"}
+                    </Button>
                   </div>
                 </div>
               ))}
@@ -212,6 +270,54 @@ const DashboardPage = ({ user }: DashboardProps) => {
           </>
         )}
       </div>
+      
+      {/* Analysis Result Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Image Analysis</DialogTitle>
+            <DialogDescription>
+              {selectedTune && `Analysis for "${selectedTune.title}" by ${selectedTune.artist}`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          {analyzing ? (
+            <div className="dialog-loading">Analyzing image...</div>
+          ) : analysisResult ? (
+            <div className="analysis-results">
+              <div className="analysis-result-item">
+                <h4>Mood</h4>
+                <p>{analysisResult.mood}</p>
+              </div>
+              
+              <div className="analysis-result-item">
+                <h4>Elements</h4>
+                <ul>
+                  {analysisResult.elements.map((element, index) => (
+                    <li key={index}>{element}</li>
+                  ))}
+                </ul>
+              </div>
+              
+              <div className="analysis-result-item">
+                <h4>Music Relevance</h4>
+                <p>{analysisResult.musicRelevance}</p>
+              </div>
+              
+              <div className="analysis-result-item">
+                <h4>Suggested Tags</h4>
+                <div className="tags-container">
+                  {analysisResult.suggestedTags.map((tag, index) => (
+                    <span key={index} className="analysis-tag">#{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="dialog-error">Failed to analyze image. Please try again.</div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
