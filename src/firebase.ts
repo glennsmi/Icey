@@ -18,13 +18,13 @@ interface FirebaseConfig {
 
 // Replace these with your actual Firebase project config
 const firebaseConfig: FirebaseConfig = {
-  apiKey: "AIzaSyClo1tBcQHdY92Z7ZQr75VogyCsENboBoc",
-  authDomain: "icey-52adb.firebaseapp.com",
-  projectId: "icey-52adb",
-  storageBucket: "icey-52adb.firebasestorage.app",
-  messagingSenderId: "506578843462",
-  appId: "1:506578843462:web:93e48e35c0b79fd48e5747",
-  measurementId: "G-12NK0Q02G4"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Initialize Firebase
